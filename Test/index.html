@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventMesh API Tester</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>EventMesh API Testing Interface</h1>
+        <p>Test your API endpoints running on localhost:8000</p>
+    </header>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="users">Users</button>
+        <button class="tab-btn" data-tab="events">Events</button>
+        <button class="tab-btn" data-tab="connections">Connections</button>
+    </div>
+
+    <div class="tab-content">
+        <!-- Users Tab -->
+        <div id="users" class="tab-pane active">
+            <h2>User Endpoints</h2>
+            
+            <div class="endpoint-section">
+                <h3>Create User</h3>
+                <form id="create-user-form">
+                    <div class="form-group">
+                        <label for="user-uid">User UID:</label>
+                        <input type="text" id="user-uid">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-display-name">Display Name:</label>
+                        <input type="text" id="user-display-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-email">Email:</label>
+                        <input type="email" id="user-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-bio">Bio:</label>
+                        <textarea id="user-bio"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-profile-image">Profile Image URL:</label>
+                        <input type="url" id="user-profile-image">
+                    </div>
+                    <button type="submit">Create User</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get User</h3>
+                <form id="get-user-form">
+                    <div class="form-group">
+                        <label for="get-user-id">User ID:</label>
+                        <input type="text" id="get-user-id" required>
+                    </div>
+                    <button type="submit">Get User</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Update User</h3>
+                <form id="update-user-form">
+                    <div class="form-group">
+                        <label for="update-user-id">User ID:</label>
+                        <input type="text" id="update-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="update-display-name">Display Name:</label>
+                        <input type="text" id="update-display-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="update-bio">Bio:</label>
+                        <textarea id="update-bio"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="update-profile-image">Profile Image URL:</label>
+                        <input type="url" id="update-profile-image">
+                    </div>
+                    <button type="submit">Update User</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Update User Interests</h3>
+                <form id="user-interests-form">
+                    <div class="form-group">
+                        <label for="interests-user-id">User ID:</label>
+                        <input type="text" id="interests-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-interests">Interests (comma separated):</label>
+                        <input type="text" id="user-interests" required placeholder="music,sports,technology">
+                    </div>
+                    <button type="submit">Update Interests</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Update User Location</h3>
+                <form id="user-location-form">
+                    <div class="form-group">
+                        <label for="location-user-id">User ID:</label>
+                        <input type="text" id="location-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-latitude">Latitude:</label>
+                        <input type="number" id="user-latitude" required step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="user-longitude">Longitude:</label>
+                        <input type="number" id="user-longitude" required step="0.000001">
+                    </div>
+                    <button type="submit">Update Location</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get User Events</h3>
+                <form id="user-events-form">
+                    <div class="form-group">
+                        <label for="events-user-id">User ID:</label>
+                        <input type="text" id="events-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="events-status">Status (optional):</label>
+                        <select id="events-status">
+                            <option value="">All</option>
+                            <option value="attending">Attending</option>
+                            <option value="interested">Interested</option>
+                            <option value="declined">Declined</option>
+                        </select>
+                    </div>
+                    <button type="submit">Get Events</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get User by Email</h3>
+                <form id="get-user-by-email-form">
+                    <div class="form-group">
+                        <label for="user-email-lookup">Email:</label>
+                        <input type="email" id="user-email-lookup" required>
+                    </div>
+                    <button type="submit">Find User</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Events Tab -->
+        <div id="events" class="tab-pane">
+            <h2>Event Endpoints</h2>
+            
+            <div class="endpoint-section">
+                <h3>Create Event</h3>
+                <form id="create-event-form">
+                    <div class="form-group">
+                        <label for="event-title">Title:</label>
+                        <input type="text" id="event-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-description">Description:</label>
+                        <textarea id="event-description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-start">Start Time:</label>
+                        <input type="datetime-local" id="event-start" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-end">End Time:</label>
+                        <input type="datetime-local" id="event-end" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="venue-name">Venue Name:</label>
+                        <input type="text" id="venue-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="venue-address">Venue Address:</label>
+                        <input type="text" id="venue-address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="venue-lat">Venue Latitude:</label>
+                        <input type="number" id="venue-lat" required step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="venue-long">Venue Longitude:</label>
+                        <input type="number" id="venue-long" required step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-categories">Categories (comma separated):</label>
+                        <input type="text" id="event-categories" required placeholder="music,outdoor,social">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-image">Image URL:</label>
+                        <input type="url" id="event-image">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-price">Price:</label>
+                        <input type="number" id="event-price" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-organizer">Organizer Name:</label>
+                        <input type="text" id="event-organizer" required>
+                    </div>
+                    <button type="submit">Create Event</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get Events</h3>
+                <form id="get-events-form">
+                    <div class="form-group">
+                        <label for="filter-categories">Categories (comma separated):</label>
+                        <input type="text" id="filter-categories" placeholder="music,outdoor,social">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-start-date">Start Date:</label>
+                        <input type="datetime-local" id="filter-start-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-end-date">End Date:</label>
+                        <input type="datetime-local" id="filter-end-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-latitude">Latitude:</label>
+                        <input type="number" id="filter-latitude" step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-longitude">Longitude:</label>
+                        <input type="number" id="filter-longitude" step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-distance">Max Distance (km):</label>
+                        <input type="number" id="filter-distance" value="10" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-free">Free Only:</label>
+                        <input type="checkbox" id="filter-free">
+                    </div>
+                    <button type="submit">Get Events</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get Event by ID</h3>
+                <form id="get-event-form">
+                    <div class="form-group">
+                        <label for="get-event-id">Event ID:</label>
+                        <input type="text" id="get-event-id" required>
+                    </div>
+                    <button type="submit">Get Event</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>RSVP to Event</h3>
+                <form id="event-rsvp-form">
+                    <div class="form-group">
+                        <label for="rsvp-event-id">Event ID:</label>
+                        <input type="text" id="rsvp-event-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rsvp-user-id">User ID:</label>
+                        <input type="text" id="rsvp-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rsvp-status">Status:</label>
+                        <select id="rsvp-status" required>
+                            <option value="attending">Attending</option>
+                        </select>
+                    </div>
+                    <button type="submit">Submit RSVP</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get Event Attendees</h3>
+                <form id="event-attendees-form">
+                    <div class="form-group">
+                        <label for="attendees-event-id">Event ID:</label>
+                        <input type="text" id="attendees-event-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="attendees-status">Status:</label>
+                        <select id="attendees-status">
+                            <option value="">All</option>
+                            <option value="attending">Attending</option>
+                            <option value="interested">Interested</option>
+                            <option value="declined">Declined</option>
+                        </select>
+                    </div>
+                    <button type="submit">Get Attendees</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get Event Recommendations</h3>
+                <form id="event-recommendations-form">
+                    <div class="form-group">
+                        <label for="rec-user-id">User ID:</label>
+                        <input type="text" id="rec-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="rec-latitude">Latitude:</label>
+                        <input type="number" id="rec-latitude" required step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="rec-longitude">Longitude:</label>
+                        <input type="number" id="rec-longitude" required step="0.000001">
+                    </div>
+                    <div class="form-group">
+                        <label for="rec-distance">Max Distance (km):</label>
+                        <input type="number" id="rec-distance" value="10" min="0">
+                    </div>
+                    <button type="submit">Get Recommendations</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Connections Tab -->
+        <div id="connections" class="tab-pane">
+            <h2>Connection Endpoints</h2>
+            
+            <div class="endpoint-section">
+                <h3>Send Connection Request</h3>
+                <form id="connection-request-form">
+                    <div class="form-group">
+                        <label for="from-user-id">From User ID:</label>
+                        <input type="text" id="from-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="to-user-id">To User ID:</label>
+                        <input type="text" id="to-user-id" required>
+                    </div>
+                   
+                    <button type="submit">Send Request</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Respond to Connection Request</h3>
+                <form id="connection-response-form">
+                    <div class="form-group">
+                        <label for="sender-user-id">Sender User ID:</label>
+                        <input type="text" id="sender-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="responder-user-id">Responder User ID:</label>
+                        <input type="text" id="responder-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="connection-response-status">Response:</label>
+                        <select id="connection-response-status" required>
+                            <option value="accept">Accept</option>
+                            <option value="decline">Decline</option>
+                        </select>
+                    </div>
+                    <button type="submit">Submit Response</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get User Connections</h3>
+                <form id="user-connections-form">
+                    <div class="form-group">
+                        <label for="connections-user-id">User ID:</label>
+                        <input type="text" id="connections-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="connections-status">Status:</label>
+                        <select id="connections-status">
+                            <option value="">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="declined">Declined</option>
+                            <option value="blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <button type="submit">Get Connections</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get Connection Recommendations</h3>
+                <form id="connection-recommendations-form">
+                    <div class="form-group">
+                        <label for="conn-rec-user-id">User ID:</label>
+                        <input type="text" id="conn-rec-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="conn-rec-limit">Limit:</label>
+                        <input type="number" id="conn-rec-limit" value="10" min="1" max="20">
+                    </div>
+                    <button type="submit">Get Recommendations</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get Event Connection Recommendations</h3>
+                <form id="event-connections-form">
+                    <div class="form-group">
+                        <label for="event-conn-event-id">Event ID:</label>
+                        <input type="text" id="event-conn-event-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-conn-user-id">User ID:</label>
+                        <input type="text" id="event-conn-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="event-conn-limit">Limit:</label>
+                        <input type="number" id="event-conn-limit" value="5" min="1" max="10">
+                    </div>
+                    <button type="submit">Get Event Connections</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-container">
+        <h2>Response</h2>
+        <div id="response-status"></div>
+        <pre id="response-data"></pre>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
