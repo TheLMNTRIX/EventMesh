@@ -27,3 +27,12 @@ async def migrate_data():
         "message": "Data migration completed",
         "details": result
     }
+
+@router.post("/recalculate-events-attended")
+async def recalculate_events_attended():
+    """Admin endpoint to recalculate all users' events_attended based on event RSVPs"""
+    updated_count = await firebase_service.recalculate_events_attended()
+    return {
+        "status": "success", 
+        "message": f"Updated events_attended for {updated_count} users"
+    }

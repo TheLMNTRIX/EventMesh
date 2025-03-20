@@ -184,7 +184,15 @@ class FirebaseService:
                 'updated_at': firestore.SERVER_TIMESTAMP  # SERVER_TIMESTAMP can be used at the top level
             })
             
+            # Increment the user's events_attended counter
+            user_ref = self.db.collection('users').document(user_id)
+            user_ref.update({
+                'events_attended': firestore.Increment(1),
+                'updated_at': firestore.SERVER_TIMESTAMP
+            })
+            
             print(f"Added user {user_id} to event {event_id}. New attendee count: {attendees_count}")
+            print(f"Incremented events_attended counter for user {user_id}")
         
         return event_ref.get().to_dict()
 
@@ -408,8 +416,42 @@ class FirebaseService:
         
         return result
 
-# Initialize service
-firebase_service = FirebaseService()
+    async def recalculate_events_attended(self):
+        """Recalculate all users' events_attended based on event RSVPs"""
+        # Get all users
+        users_ref = self.db.collection('users')
+        users = list(users_ref.stream())
+        
+        # Get all events
+        events_ref = self.db.collection('events')
+        events = list(events_ref.stream())
+        
+        # For each user, count the number of events they're attending
+        updated_count = 0
+        for user_doc in users:
+            user_id = user_doc.id
+            user_data = user_doc.to_dict()
+            
+            # Count events the user is attending
+            events_attended = 0
+            for event_doc in events:
+                event_data = event_doc.to_dict()
+                attendees = event_data.get('attendees', [])
+                
+                # Check if user is in attendees
+                if any(att.get('user_id') == user_id for att in attendees):
+                    events_attended += 1
+            
+            # Update the user document if the count has changed
+            if user_data.get('events_attended', 0) != events_attended:
+                user_doc.reference.update({
+                    'events_attended': events_attended,
+                    'updated_at': firestore.SERVER_TIMESTAMP
+                })
+                print(f"Updated events_attended for user {user_id}: {events_attended}")
+                updated_count += 1
+        
+        return updated_count
 
-
+firebase_service = FirebaseService()# Initialize service
 __all__ = ["firebase_service"]

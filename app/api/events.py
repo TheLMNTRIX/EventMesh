@@ -77,9 +77,38 @@ async def get_events(
         
         events = filter_events_by_distance(events, latitude, longitude, max_distance_km)
     
+    # Ensure required fields are included in each event
+    for event in events:
+        # Ensure schedule is included
+        if "schedule" not in event:
+            event["schedule"] = []
+        
+        # Ensure image_url is included
+        if "image_url" not in event:
+            event["image_url"] = None
+        
+        # Ensure venue with coordinates is included
+        if "venue" not in event:
+            event["venue"] = {
+                "name": None,
+                "address": None,
+                "latitude": None,
+                "longitude": None
+            }
+        elif isinstance(event["venue"], dict):
+            # Ensure venue has latitude and longitude
+            if "latitude" not in event["venue"]:
+                event["venue"]["latitude"] = None
+            if "longitude" not in event["venue"]:
+                event["venue"]["longitude"] = None
+            if "name" not in event["venue"]:
+                event["venue"]["name"] = None
+            if "address" not in event["venue"]:
+                event["venue"]["address"] = None
+    
     return events
 
-@router.get("/recommendations")
+@router.get("/recommendations/{user_id}", response_model=List[Event])
 async def get_event_recommendations(
     user_id: str,
     latitude: float,
@@ -104,14 +133,24 @@ async def get_event_recommendations(
         user_id, latitude, longitude, max_distance, limit
     )
     
+    # Ensure schedule is included in each recommended event
+    for event in recommendations:
+        if "schedule" not in event:
+            event["schedule"] = []
+    
     return recommendations
 
 @router.get("/{event_id}", response_model=Event)
 async def get_event(event_id: str):
-    """Get event by ID"""
+    """Get event details by ID"""
     event = await firebase_service.get_event(event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Ensure schedule is included in the response
+    if "schedule" not in event:
+        event["schedule"] = []
+        
     return event
 
 @router.put("/{event_id}", response_model=Event)

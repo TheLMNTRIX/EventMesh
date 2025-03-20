@@ -21,27 +21,71 @@ async def create_user(user: UserCreate):
         # Generate a random 6-digit number as string
         user.uid = str(random.randint(100000, 999999))
     
-    # Check if user already exists
-    existing_user = await firebase_service.get_user(user.uid)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
-    
     # Check if email is already in use
     users_ref = firebase_service.db.collection('users')
-    email_query = users_ref.where('email', '==', user.email).limit(1)
-    if list(email_query.stream()):
-        raise HTTPException(status_code=400, detail="Email already in use")
+    email_query = users_ref.where('email', '==', user.email)
+    existing_users = list(email_query.stream())
+    
+    # Function to check if a UID is a 6-digit number
+    def is_six_digit_uid(uid):
+        return uid and uid.isdigit() and len(uid) == 6
+    
+    # Check if there's a user with same email but non-6-digit UID (Firebase UUID)
+    firebase_user_doc = None
+    for doc in existing_users:
+        user_data = doc.to_dict()
+        if not is_six_digit_uid(user_data.get('uid')):
+            firebase_user_doc = doc
+            break
+    
+    # If found, delete the document with Firebase UUID
+    if firebase_user_doc:
+        print(f"Found existing user with Firebase UUID: {firebase_user_doc.id}")
+        print(f"Deleting document to replace with 6-digit UID user: {user.uid}")
+        
+        # Copy any important data before deleting
+        existing_data = firebase_user_doc.to_dict()
+        saved_interests = existing_data.get('interests', [])
+        saved_events_attended = existing_data.get('events_attended', 0)
+        saved_connection_count = existing_data.get('connection_count', 0)
+        saved_profile_image = existing_data.get('profile_image_url')
+        saved_bio = existing_data.get('bio')
+        
+        # Delete the document
+        firebase_user_doc.reference.delete()
+        print(f"Deleted document with Firebase UUID: {firebase_user_doc.id}")
+        
+        # Preserve important user data
+        if saved_interests:
+            user_data["interests"] = saved_interests
+        if saved_profile_image and not user.profile_image_url:
+            user.profile_image_url = saved_profile_image
+        if saved_bio and not user.bio:
+            user.bio = saved_bio
+    
+    # Check if a user with our 6-digit UID already exists
+    existing_user = await firebase_service.get_user(user.uid)
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this UID already exists")
     
     # Prepare user data for storage
     user_data = user.model_dump()
     user_data["created_at"] = datetime.now()
-    user_data["interests"] = []
-    user_data["events_attended"] = 0
-    user_data["events_interested"] = 0
-    user_data["connection_count"] = 0
+    
+    # Initialize with empty arrays/zeros if not preserved from previous document
+    if "interests" not in user_data:
+        user_data["interests"] = []
+    if "events_attended" not in user_data:
+        user_data["events_attended"] = 0
+    if "events_interested" not in user_data:
+        user_data["events_interested"] = 0
+    if "connection_count" not in user_data:
+        user_data["connection_count"] = 0
     
     # Create user in database
     created_user = await firebase_service.create_user(user_data)
+    
+    print(f"Created new user with 6-digit UID: {user.uid}")
     return created_user
 
 @router.get("/{user_id}", response_model=User)
@@ -117,6 +161,11 @@ async def get_user_events(
             if status is None or user_attendance["status"] == status:
                 event_with_status = event.copy()
                 event_with_status["user_status"] = user_attendance["status"]
+                
+                # Ensure schedule is included
+                if "schedule" not in event_with_status:
+                    event_with_status["schedule"] = []
+                    
                 user_events.append(event_with_status)
     
     return user_events

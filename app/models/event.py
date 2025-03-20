@@ -62,7 +62,7 @@ class Event(EventBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     attendees_count: Optional[int] = 0
-    attendees: Optional[Dict[str, EventAttendee]] = None
+    attendees: Optional[List[EventAttendee]] = None
     
     class Config:
         from_attributes = True
