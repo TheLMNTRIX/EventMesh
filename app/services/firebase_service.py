@@ -168,17 +168,20 @@ class FirebaseService:
         
         if not already_attending:
             # Add the user to attendees array
+            # Use a current datetime instead of SERVER_TIMESTAMP for the nested structure
             attendee_data = {
                 'user_id': user_id,
-                'rsvp_date': firestore.SERVER_TIMESTAMP
+                'rsvp_date': datetime.now().isoformat()  # Use ISO format string instead of SERVER_TIMESTAMP
             }
             attendees.append(attendee_data)
             
             # Update the event document with new attendee and count
             attendees_count = len(attendees)
+            
             event_ref.update({
                 'attendees': attendees,
-                'attendees_count': attendees_count
+                'attendees_count': attendees_count,
+                'updated_at': firestore.SERVER_TIMESTAMP  # SERVER_TIMESTAMP can be used at the top level
             })
             
             print(f"Added user {user_id} to event {event_id}. New attendee count: {attendees_count}")
