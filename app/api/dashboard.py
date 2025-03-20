@@ -96,14 +96,14 @@ async def get_organizer_dashboard(
     email: str = Path(..., description="Email of the organizer to fetch events for")
 ):
     """
-    Get comprehensive details for all events organized by a specific email address.
+    Get summary details for all events organized by a specific email address.
     
     Returns:
-    - List of all events organized
-    - Total attendee count across all events
     - Total number of events organized
+    - Total attendee count across all events
     - Overall average feedback score
     - List of upcoming events sorted by date (nearest first)
+    - List of past events sorted by date (most recent first)
     """
     # Get all events (with a high limit to ensure we get all events)
     all_events = await firebase_service.get_events(limit=200)
@@ -190,7 +190,7 @@ async def get_organizer_dashboard(
     past_events.sort(key=lambda x: x.get("start_time") if isinstance(x.get("start_time"), datetime) 
                     else datetime.min, reverse=True)
     
-    # Build the response
+    # Build the response with only the requested information
     dashboard_data = {
         "organizer_email": email,
         "stats": {
@@ -199,12 +199,110 @@ async def get_organizer_dashboard(
             "average_rating": round(avg_overall_rating, 1)
         },
         "upcoming_events": upcoming_events,
-        "past_events": past_events,
-        "all_events": organizer_events
+        "past_events": past_events
     }
     
     return dashboard_data
 
+@router.get("/{event_id}/attendees")
+async def get_event_attendees_details(
+    event_id: str = Path(..., description="ID of the event to get attendee details for")
+):
+    """
+    Get a simplified list of attendee details for an event including:
+    - Name (display_name)
+    - Profile picture URL
+    - Email
+    - RSVP date
+    
+    Returns an array of attendee objects with the requested fields.
+    """
+    # Check if event exists
+    event = await firebase_service.get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Get attendees
+    attendees = await firebase_service.get_event_attendees(event_id)
+    
+    # Enrich with user details but only include requested fields
+    simplified_attendees = []
+    for attendee in attendees:
+        user_id = attendee["user_id"]
+        user_details = await firebase_service.get_user(user_id)
+        if user_details:
+            simplified_attendee = {
+                "display_name": user_details.get("display_name", "Unknown"),
+                "profile_image_url": user_details.get("profile_image_url"),
+                "email": user_details.get("email"),
+                "rsvp_date": attendee.get("rsvp_date")
+            }
+            simplified_attendees.append(simplified_attendee)
+    
+    return {
+        "event_id": event_id,
+        "attendees_count": len(simplified_attendees),
+        "attendees": simplified_attendees
+    }
+
+@router.get("/{event_id}/feedback")
+async def get_event_feedback_with_user_details(
+    event_id: str = Path(..., description="ID of the event to get feedback for")
+):
+    """
+    Get all feedback for an event with enriched user information.
+    
+    Returns:
+    - Event ID
+    - List of feedback items with user details (display_name, profile image)
+    - Overall average rating
+    """
+    # Check if event exists
+    event = await firebase_service.get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Get all feedback for the event
+    feedback_list = await firebase_service.get_event_feedback(event_id)
+    
+    # Calculate feedback stats
+    rating_sum = 0
+    rating_count = 0
+    
+    for feedback in feedback_list:
+        if feedback.get("rating"):
+            rating_sum += feedback["rating"]
+            rating_count += 1
+    
+    avg_rating = rating_sum / rating_count if rating_count > 0 else 0
+    
+    # Enrich feedback with user details
+    enriched_feedback = []
+    for feedback in feedback_list:
+        user_id = feedback.get("user_id")
+        if user_id:
+            user_details = await firebase_service.get_user(user_id)
+            if user_details:
+                enriched_feedback_item = {
+                    **feedback,
+                    "user": {
+                        "user_id": user_id,
+                        "display_name": user_details.get("display_name", "Unknown"),
+                        "profile_image_url": user_details.get("profile_image_url")
+                    }
+                }
+                enriched_feedback.append(enriched_feedback_item)
+    
+    return {
+        "event_id": event_id,
+        "feedback_count": len(enriched_feedback),
+        "average_rating": avg_rating,
+        "feedback": enriched_feedback
+    }
+
 __all__ = ["router"]
+
+
+
 
 
