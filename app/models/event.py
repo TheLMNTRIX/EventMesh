@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from datetime import datetime
 
 class Venue(BaseModel):
@@ -8,6 +8,13 @@ class Venue(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     description: Optional[str] = None
+
+class ScheduleItem(BaseModel):
+    title: str
+    speaker_name: Optional[str] = None
+    description: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
 
 class EventBase(BaseModel):
     title: Optional[str] = None
@@ -20,8 +27,11 @@ class EventBase(BaseModel):
     price: Optional[float] = None
     organizer_name: Optional[str] = None
     organizer_id: Optional[str] = None
+    organizer_email: Optional[str] = None  # New field
+    organizer_phone: Optional[str] = None  # New field
     website_url: Optional[str] = None
     max_attendees: Optional[int] = None
+    schedule: Optional[List[ScheduleItem]] = None  # New field for event schedule
 
 class EventCreate(EventBase):
     pass

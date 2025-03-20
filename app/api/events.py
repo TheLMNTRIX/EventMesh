@@ -21,6 +21,20 @@ async def create_event(event: EventCreate):
     if not validate_coordinates(event.venue.latitude, event.venue.longitude):
         raise HTTPException(status_code=400, detail="Invalid coordinates")
     
+    # Validate schedule items if provided
+    if event.schedule:
+        for item in event.schedule:
+            # Check that each schedule item has valid start/end times
+            if not validate_event_dates(item.start_time, item.end_time):
+                raise HTTPException(status_code=400, detail="Schedule item end time must be after start time")
+            
+            # Check that schedule items are within the event time range
+            if item.start_time < event.start_time or item.end_time > event.end_time:
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Schedule items must be within the event's start and end times"
+                )
+    
     # Prepare event data
     event_data = event.model_dump()
     

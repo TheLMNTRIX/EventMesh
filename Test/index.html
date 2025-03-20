@@ -206,6 +206,21 @@
                         <label for="event-organizer">Organizer Name:</label>
                         <input type="text" id="event-organizer" required>
                     </div>
+                    <div class="form-group">
+                        <label for="event-organizer-email">Organizer Email:</label>
+                        <input type="email" id="event-organizer-email">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-organizer-phone">Organizer Phone:</label>
+                        <input type="tel" id="event-organizer-phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="event-schedule">Schedule Items:</label>
+                        <div id="schedule-items-container">
+                            <!-- Schedule items will be added here dynamically -->
+                        </div>
+                        <button type="button" id="add-schedule-item">Add Schedule Item</button>
+                    </div>
                     <button type="submit">Create Event</button>
                 </form>
             </div>
@@ -381,6 +396,17 @@
                         </select>
                     </div>
                     <button type="submit">Get Connections</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get Pending Connection Requests</h3>
+                <form id="pending-requests-form">
+                    <div class="form-group">
+                        <label for="pending-requests-user-id">User ID:</label>
+                        <input type="text" id="pending-requests-user-id" required>
+                    </div>
+                    <button type="submit">Get Pending Requests</button>
                 </form>
             </div>
 

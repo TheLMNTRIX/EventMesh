@@ -248,3 +248,42 @@ async def get_event_connection_recommendations(event_id: str, user_id: str, limi
     recommendations.sort(key=lambda x: len(x["mutual_interests"]), reverse=True)
     
     return recommendations[:limit]
+
+@router.get("/pending-requests")
+async def get_pending_connection_requests(user_id: str = Query(..., description="ID of the user to check pending requests for")):
+    """
+    Get all pending connection requests sent to a user
+    
+    Returns: List of users who have sent pending connection requests to this user
+    """
+    # Validate user exists
+    user = await firebase_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get all connections for the user
+    all_connections = await firebase_service.get_user_connections(user_id)
+    
+    # Filter for incoming requests that are pending
+    pending_requests = [
+        conn for conn in all_connections 
+        if conn["to_user_id"] == user_id and conn["status"] == "pending"
+    ]
+    
+    # Get sender details for each pending request
+    pending_senders = []
+    for request in pending_requests:
+        sender_id = request["from_user_id"]
+        sender = await firebase_service.get_user(sender_id)
+        
+        if sender:
+            pending_senders.append({
+                "connection_id": request["id"],
+                "uid": sender.get("uid"),
+                "display_name": sender.get("display_name", "Unknown"),
+                "email": sender.get("email", ""),
+                "profile_image_url": sender.get("profile_image_url"),
+                "created_at": request.get("created_at")
+            })
+    
+    return pending_senders

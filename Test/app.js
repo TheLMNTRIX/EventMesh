@@ -183,6 +183,29 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('create-event-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // Collect schedule items
+        const scheduleItems = [];
+        document.querySelectorAll('.schedule-item').forEach((item) => {
+            // Get the actual index from the data attribute or from the element itself
+            const itemIndex = item.querySelector('.remove-schedule-item').getAttribute('data-index');
+            
+            const title = document.getElementById(`schedule-title-${itemIndex}`).value;
+            const speakerName = document.getElementById(`schedule-speaker-${itemIndex}`).value;
+            const description = document.getElementById(`schedule-description-${itemIndex}`).value;
+            const startTime = document.getElementById(`schedule-start-${itemIndex}`).value;
+            const endTime = document.getElementById(`schedule-end-${itemIndex}`).value;
+            
+            if (title && startTime && endTime) {
+                scheduleItems.push({
+                    title: title,
+                    speaker_name: speakerName || null,
+                    description: description || null,
+                    start_time: new Date(startTime).toISOString(),
+                    end_time: new Date(endTime).toISOString()
+                });
+            }
+        });
+        
         const eventData = {
             title: document.getElementById('event-title').value,
             description: document.getElementById('event-description').value,
@@ -197,7 +220,10 @@ document.addEventListener('DOMContentLoaded', function() {
             category: document.getElementById('event-categories').value.split(',').map(c => c.trim()),
             image_url: document.getElementById('event-image').value || null,
             price: document.getElementById('event-price').value ? parseFloat(document.getElementById('event-price').value) : 0,
-            organizer_name: document.getElementById('event-organizer').value
+            organizer_name: document.getElementById('event-organizer').value,
+            organizer_email: document.getElementById('event-organizer-email').value || null,
+            organizer_phone: document.getElementById('event-organizer-phone').value || null,
+            schedule: scheduleItems.length > 0 ? scheduleItems : null
         };
         
         const response = await callApi('/events', 'POST', eventData);
@@ -364,6 +390,17 @@ document.addEventListener('DOMContentLoaded', function() {
         displayResponse(response, response.status >= 400);
     });
     
+    // Get Pending Connection Requests
+    document.getElementById('pending-requests-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('pending-requests-user-id').value;
+        const endpoint = `/connections/pending-requests?user_id=${userId}`;
+        
+        const response = await callApi(endpoint);
+        displayResponse(response, response.status >= 400);
+    });
+    
     // Get Connection Recommendations
     document.getElementById('connection-recommendations-form').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -458,5 +495,48 @@ document.addEventListener('DOMContentLoaded', function() {
         const userId = document.getElementById('delete-feedback-user-id').value;
         const response = await callApi(`/feedback/${eventId}/user/${userId}`, 'DELETE');
         displayResponse(response, response.status >= 400);
+    });
+
+    // Initialize schedule items counter
+    let scheduleItemCount = 0;
+
+    // Add schedule item button handler
+    document.getElementById('add-schedule-item').addEventListener('click', function() {
+        const container = document.getElementById('schedule-items-container');
+        const itemIndex = scheduleItemCount++;
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'schedule-item';
+        itemDiv.innerHTML = `
+            <h4>Schedule Item #${itemIndex + 1}</h4>
+            <div class="form-group">
+                <label for="schedule-title-${itemIndex}">Title:</label>
+                <input type="text" id="schedule-title-${itemIndex}" required>
+            </div>
+            <div class="form-group">
+                <label for="schedule-speaker-${itemIndex}">Speaker Name:</label>
+                <input type="text" id="schedule-speaker-${itemIndex}">
+            </div>
+            <div class="form-group">
+                <label for="schedule-description-${itemIndex}">Description:</label>
+                <textarea id="schedule-description-${itemIndex}"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="schedule-start-${itemIndex}">Start Time:</label>
+                <input type="datetime-local" id="schedule-start-${itemIndex}" required>
+            </div>
+            <div class="form-group">
+                <label for="schedule-end-${itemIndex}">End Time:</label>
+                <input type="datetime-local" id="schedule-end-${itemIndex}" required>
+            </div>
+            <button type="button" class="remove-schedule-item" data-index="${itemIndex}">Remove</button>
+        `;
+        
+        container.appendChild(itemDiv);
+        
+        // Add event listener to remove button
+        itemDiv.querySelector('.remove-schedule-item').addEventListener('click', function() {
+            container.removeChild(itemDiv);
+        });
     });
 });
