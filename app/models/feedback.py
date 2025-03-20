@@ -11,7 +11,7 @@ class EventRating(BaseModel):
 
 class EventFeedbackCreate(BaseModel):
     rating: Optional[int] = Field(None, ge=1, le=5)
-    comments: Optional[str] = None
+    comment: Optional[str] = None
 
 class EventFeedbackResponse(EventFeedbackCreate):
     event_id: Optional[str] = None

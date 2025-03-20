@@ -388,4 +388,75 @@ document.addEventListener('DOMContentLoaded', function() {
         const response = await callApi(endpoint);
         displayResponse(response, response.status >= 400);
     });
+    
+    // FEEDBACK ENDPOINTS
+    
+    // Create Feedback
+    document.getElementById('create-feedback-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const eventId = document.getElementById('feedback-event-id').value;
+        const userId = document.getElementById('feedback-user-id').value;
+        const feedbackData = {
+            rating: parseInt(document.getElementById('feedback-rating').value),
+            comment: document.getElementById('feedback-comment').value || null
+        };
+        
+        // Pass user_id as a query parameter
+        const response = await callApi(`/feedback/${eventId}?user_id=${userId}`, 'POST', feedbackData);
+        displayResponse(response, response.status >= 400);
+    });
+    
+    // Get All Event Feedback
+    document.getElementById('get-event-feedback-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const eventId = document.getElementById('get-feedback-event-id').value;
+        const response = await callApi(`/feedback/${eventId}`);
+        displayResponse(response, response.status >= 400);
+    });
+    
+    // Get User Feedback for Event
+    document.getElementById('get-user-event-feedback-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const eventId = document.getElementById('user-feedback-event-id').value;
+        const userId = document.getElementById('user-feedback-user-id').value;
+        const response = await callApi(`/feedback/${eventId}/user/${userId}`);
+        displayResponse(response, response.status >= 400);
+    });
+    
+    // Get All User Feedback
+    document.getElementById('get-all-user-feedback-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('all-user-feedback-id').value;
+        const response = await callApi(`/feedback/user/${userId}`);
+        displayResponse(response, response.status >= 400);
+    });
+    
+    // Update Feedback
+    document.getElementById('update-feedback-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const eventId = document.getElementById('update-feedback-event-id').value;
+        const userId = document.getElementById('update-feedback-user-id').value;
+        const feedbackData = {
+            rating: parseInt(document.getElementById('update-feedback-rating').value),
+            comment: document.getElementById('update-feedback-comment').value || null
+        };
+        
+        const response = await callApi(`/feedback/${eventId}/user/${userId}`, 'PUT', feedbackData);
+        displayResponse(response, response.status >= 400);
+    });
+    
+    // Delete Feedback
+    document.getElementById('delete-feedback-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const eventId = document.getElementById('delete-feedback-event-id').value;
+        const userId = document.getElementById('delete-feedback-user-id').value;
+        const response = await callApi(`/feedback/${eventId}/user/${userId}`, 'DELETE');
+        displayResponse(response, response.status >= 400);
+    });
 });

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import users, events, connections, preferences, feedback, admin
+from app.api.feedback import router as feedback_router
 
 app = FastAPI(
     title="EventMesh API",
@@ -23,7 +24,7 @@ app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(events.router, prefix="/api/events", tags=["Events"])
 app.include_router(connections.router, prefix="/api/connections", tags=["Connections"])
 app.include_router(preferences.router, prefix="/api/preferences", tags=["Preferences"])
-# app.include_router(feedback.router, prefix="/api/feedback", tags=["Feedback"])
+app.include_router(feedback_router, prefix="/api/feedback", tags=["feedback"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 
 @app.get("/")

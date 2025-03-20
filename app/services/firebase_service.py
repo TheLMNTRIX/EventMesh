@@ -222,6 +222,18 @@ class FirebaseService:
             
         return feedback
 
+    async def delete_event_feedback(self, event_id: str, user_id: str) -> bool:
+        """Delete feedback for an event from a user"""
+        event_ref = self.db.collection('events').document(event_id)
+        feedback_ref = event_ref.collection('feedback').document(user_id)
+        
+        feedback = feedback_ref.get()
+        if not feedback.exists:
+            return False
+        
+        feedback_ref.delete()
+        return True
+
     async def recalculate_counts(self):
         """Recalculate all event attendee counts and user connection counts"""
         # Recalculate event attendee counts

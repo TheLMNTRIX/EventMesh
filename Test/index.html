@@ -16,6 +16,7 @@
         <button class="tab-btn active" data-tab="users">Users</button>
         <button class="tab-btn" data-tab="events">Events</button>
         <button class="tab-btn" data-tab="connections">Connections</button>
+        <button class="tab-btn" data-tab="feedback">Feedback</button>
     </div>
 
     <div class="tab-content">
@@ -414,6 +415,109 @@
                         <input type="number" id="event-conn-limit" value="5" min="1" max="10">
                     </div>
                     <button type="submit">Get Event Connections</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Feedback Tab -->
+        <div id="feedback" class="tab-pane">
+            <h2>Feedback Endpoints</h2>
+            
+            <div class="endpoint-section">
+                <h3>Create Feedback</h3>
+                <form id="create-feedback-form">
+                    <div class="form-group">
+                        <label for="feedback-event-id">Event ID:</label>
+                        <input type="text" id="feedback-event-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-user-id">User ID:</label>
+                        <input type="text" id="feedback-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-rating">Rating:</label>
+                        <input type="number" id="feedback-rating" min="1" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-comment">Comment:</label>
+                        <textarea id="feedback-comment"></textarea>
+                    </div>
+                    <button type="submit">Submit Feedback</button>
+                </form>
+            </div>
+            
+            <div class="endpoint-section">
+                <h3>Get All Event Feedback</h3>
+                <form id="get-event-feedback-form">
+                    <div class="form-group">
+                        <label for="get-feedback-event-id">Event ID:</label>
+                        <input type="text" id="get-feedback-event-id" required>
+                    </div>
+                    <button type="submit">Get Feedback</button>
+                </form>
+            </div>
+            
+            <div class="endpoint-section">
+                <h3>Get User Feedback for Event</h3>
+                <form id="get-user-event-feedback-form">
+                    <div class="form-group">
+                        <label for="user-feedback-event-id">Event ID:</label>
+                        <input type="text" id="user-feedback-event-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="user-feedback-user-id">User ID:</label>
+                        <input type="text" id="user-feedback-user-id" required>
+                    </div>
+                    <button type="submit">Get User Feedback</button>
+                </form>
+            </div>
+            
+            <div class="endpoint-section">
+                <h3>Get All User Feedback</h3>
+                <form id="get-all-user-feedback-form">
+                    <div class="form-group">
+                        <label for="all-user-feedback-id">User ID:</label>
+                        <input type="text" id="all-user-feedback-id" required>
+                    </div>
+                    <button type="submit">Get All User Feedback</button>
+                </form>
+            </div>
+            
+            <div class="endpoint-section">
+                <h3>Update Feedback</h3>
+                <form id="update-feedback-form">
+                    <div class="form-group">
+                        <label for="update-feedback-event-id">Event ID:</label>
+                        <input type="text" id="update-feedback-event-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="update-feedback-user-id">User ID:</label>
+                        <input type="text" id="update-feedback-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="update-feedback-rating">Rating:</label>
+                        <input type="number" id="update-feedback-rating" min="1" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="update-feedback-comment">Comment:</label>
+                        <textarea id="update-feedback-comment"></textarea>
+                    </div>
+                    <button type="submit">Update Feedback</button>
+                </form>
+            </div>
+            
+            <div class="endpoint-section">
+                <h3>Delete Feedback</h3>
+                <form id="delete-feedback-form">
+                    <div class="form-group">
+                        <label for="delete-feedback-event-id">Event ID:</label>
+                        <input type="text" id="delete-feedback-event-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="delete-feedback-user-id">User ID:</label>
+                        <input type="text" id="delete-feedback-user-id" required>
+                    </div>
+                    <button type="submit">Delete Feedback</button>
                 </form>
             </div>
         </div>
