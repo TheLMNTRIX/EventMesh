@@ -428,6 +428,33 @@ document.addEventListener('DOMContentLoaded', function() {
         displayResponse(response, response.status >= 400);
     });
     
+    // Get Connections Activity
+    document.getElementById('connections-activity-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('activity-user-id').value;
+        const limit = document.getElementById('activity-limit').value || 20;
+        const days = document.getElementById('activity-days').value || 30;
+        
+        const endpoint = `/connections/activity/${userId}?limit=${limit}&days=${days}`;
+        
+        const response = await callApi(endpoint);
+        displayResponse(response, response.status >= 400);
+    });
+    
+    // Get User Feed (Pending Requests + Activities)
+    document.getElementById('user-feed-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('feed-user-id').value;
+        const limit = document.getElementById('feed-limit').value || 20;
+        
+        const endpoint = `/connections/feed/${userId}?limit=${limit}`;
+        
+        const response = await callApi(endpoint);
+        displayResponse(response, response.status >= 400);
+    });
+    
     // FEEDBACK ENDPOINTS
     
     // Create Feedback

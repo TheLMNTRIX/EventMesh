@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional
+from datetime import datetime, timedelta
 
 from app.models.connection import ConnectionRequest, ConnectionResponse, ConnectionSuggestion, ConnectionRecommendation
 from app.services.firebase_service import firebase_service
@@ -286,5 +287,202 @@ async def get_event_based_connection_recommendations(
     # The recommendations already include score from your recommendation service
     return recommendations
 
+@router.get("/activity/{user_id}")
+async def get_connections_activity(
+    user_id: str,
+    limit: int = Query(20, le=100, description="Maximum number of activities to return"),
+    days: int = Query(30, le=90, description="Number of days to look back")
+):
+    """
+    Get a feed of recent activities from the user's connections
+    
+    This endpoint returns a simplified chronological feed of activities performed by the 
+    user's connections, such as RSVPing to events.
+    
+    Activities are sorted by time, with the most recent appearing first.
+    """
+    # Validate user exists
+    user = await firebase_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get user's connections
+    connections = await firebase_service.get_user_connections(user_id, status="accepted")
+    connection_ids = [conn["from_user_id"] if conn["to_user_id"] == user_id else conn["to_user_id"] 
+                      for conn in connections]
+    
+    if not connection_ids:
+        return []
+    
+    # Get recent events (within specified days)
+    look_back_date = datetime.now() - timedelta(days=days)
+    events = await firebase_service.get_events(
+        {"start_date": look_back_date},
+        limit=100
+    )
+    
+    # Activity feed to return
+    activity_feed = []
+    
+    # For each event, get attendees that are connections of the user
+    for event in events:
+        event_id = event.get("id")
+        event_attendees = await firebase_service.get_event_attendees(event_id)
+        
+        # Filter to only include connections
+        connection_attendees = [
+            attendee for attendee in event_attendees
+            if attendee.get("user_id") in connection_ids
+        ]
+        
+        # Get connection details and create activity objects
+        for attendee in connection_attendees:
+            connection_id = attendee.get("user_id")
+            connection = await firebase_service.get_user(connection_id)
+            
+            if connection:
+                # Get and parse RSVP date
+                rsvp_date = attendee.get("rsvp_date")
+                
+                # Skip if no RSVP date
+                if not rsvp_date:
+                    continue
+                
+                # Convert string dates to datetime objects if needed
+                if isinstance(rsvp_date, str):
+                    try:
+                        rsvp_date = datetime.fromisoformat(rsvp_date.replace('Z', '+00:00'))
+                        rsvp_date = rsvp_date.replace(tzinfo=None)  # Make naive
+                    except ValueError:
+                        continue
+                
+                # Skip if RSVP is older than the look-back period
+                if rsvp_date < look_back_date:
+                    continue
+                
+                # Simplified activity object with only the requested fields
+                activity = {
+                    "user": {
+                        "uid": connection.get("uid"),
+                        "display_name": connection.get("display_name", "Unknown User"),
+                        "profile_image_url": connection.get("profile_image_url")
+                    },
+                    "event": {
+                        "id": event_id,
+                        "name": event.get("title"),
+                        "date": event.get("start_time")
+                    },
+                    "timestamp": rsvp_date  # Keep timestamp for sorting
+                }
+                
+                activity_feed.append(activity)
+    
+    # Sort by timestamp (most recent first)
+    activity_feed.sort(key=lambda x: x.get("timestamp", datetime.min), reverse=True)
+    
+    # Remove timestamp from the final response objects
+    for activity in activity_feed:
+        activity.pop("timestamp", None)
+    
+    # Return limited number of activities
+    return activity_feed[:limit]
+
+@router.get("/feed/{user_id}")
+async def get_user_feed(
+    user_id: str,
+    limit: int = Query(20, le=100, description="Maximum number of items to return"),
+    days: int = Query(30, le=90, description="Number of days to look back")
+):
+    """
+    Get a combined feed of pending connection requests and connections' activities
+    """
+    # Validate user exists
+    user = await firebase_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Combined feed list
+    combined_feed = []
+    
+    # PART 1: Get pending connection requests
+    all_connections = await firebase_service.get_user_connections(user_id)
+    
+    # Filter for incoming requests that are pending
+    pending_requests = [
+        conn for conn in all_connections 
+        if conn["to_user_id"] == user_id and conn["status"] == "pending"
+    ]
+    
+    # Add pending requests to combined feed
+    for request in pending_requests:
+        sender_id = request["from_user_id"]
+        sender = await firebase_service.get_user(sender_id)
+        
+        if sender:
+            combined_feed.append({
+                "type": "pending_request",
+                "timestamp": request.get("created_at"),  # Keep for sorting
+                "connection_id": request["id"],
+                "user": {
+                    "uid": sender.get("uid"),
+                    "display_name": sender.get("display_name", "Unknown User"),
+                    "profile_image_url": sender.get("profile_image_url")
+                },
+                "created_at": request.get("created_at")
+            })
+    
+    # PART 2: Get connection activities
+    connections = await firebase_service.get_user_connections(user_id, status="accepted")
+    connection_ids = [conn["from_user_id"] if conn["to_user_id"] == user_id else conn["to_user_id"] 
+                     for conn in connections]
+    
+    if connection_ids:
+        # Get recent events - still use the days parameter for filtering events
+        look_back_date = datetime.now() - timedelta(days=days)
+        events = await firebase_service.get_events(
+            {"start_date": look_back_date},
+            limit=100
+        )
+        
+        for event in events:
+            event_id = event.get("id")
+            event_attendees = await firebase_service.get_event_attendees(event_id)
+            
+            # Filter to only include connections
+            connection_attendees = [
+                attendee for attendee in event_attendees
+                if attendee.get("user_id") in connection_ids
+            ]
+            
+            for attendee in connection_attendees:
+                connection_id = attendee.get("user_id")
+                connection = await firebase_service.get_user(connection_id)
+                
+                if connection and attendee.get("rsvp_date"):
+                    combined_feed.append({
+                        "type": "connection_activity",
+                        "timestamp": attendee.get("rsvp_date"),  # Keep for sorting
+                        "user": {
+                            "uid": connection.get("uid"),
+                            "display_name": connection.get("display_name", "Unknown User"),
+                            "profile_image_url": connection.get("profile_image_url")
+                        },
+                        "event": {
+                            "id": event_id,
+                            "name": event.get("title"),
+                            "date": event.get("start_time")
+                        }
+                    })
+    
+    # Sort combined feed - we'll still sort by timestamp
+    # This might still have issues with different datetime formats but is more resilient
+    combined_feed.sort(key=lambda x: str(x.get("timestamp", "")), reverse=True)
+    
+    # Remove internal timestamp field used for sorting
+    for item in combined_feed:
+        item.pop("timestamp", None)
+    
+    # Apply overall limit
+    return combined_feed[:limit]
 
 __all__ = ["router"]

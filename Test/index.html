@@ -447,6 +447,40 @@
                     <button type="submit">Get Event Connections</button>
                 </form>
             </div>
+
+            <div class="endpoint-section">
+                <h3>Get Connections Activity</h3>
+                <form id="connections-activity-form">
+                    <div class="form-group">
+                        <label for="activity-user-id">User ID:</label>
+                        <input type="text" id="activity-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="activity-limit">Limit:</label>
+                        <input type="number" id="activity-limit" value="20" min="1" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="activity-days">Days to look back:</label>
+                        <input type="number" id="activity-days" value="30" min="1" max="90">
+                    </div>
+                    <button type="submit">Get Activity Feed</button>
+                </form>
+            </div>
+
+            <div class="endpoint-section">
+                <h3>Get User Feed (Pending Requests + Activities)</h3>
+                <form id="user-feed-form">
+                    <div class="form-group">
+                        <label for="feed-user-id">User ID:</label>
+                        <input type="text" id="feed-user-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="feed-limit">Limit:</label>
+                        <input type="number" id="feed-limit" value="20" min="1" max="100">
+                    </div>
+                    <button type="submit">Get Feed</button>
+                </form>
+            </div>
         </div>
 
         <!-- Feedback Tab -->
