@@ -325,11 +325,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const latitude = document.getElementById('rec-latitude').value;
         const longitude = document.getElementById('rec-longitude').value;
         const distance = document.getElementById('rec-distance').value;
+        const limit = document.getElementById('rec-limit').value || 10;
         
         const queryParams = [
             `latitude=${parseFloat(latitude)}`,
             `longitude=${parseFloat(longitude)}`,
-            `distance=${parseFloat(distance)}`
+            `distance=${parseFloat(distance)}`,
+            `limit=${parseInt(limit)}`
         ];
         
         const endpoint = `/events/recommendations/${userId}?${queryParams.join('&')}`;

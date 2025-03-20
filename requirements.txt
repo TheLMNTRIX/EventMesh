@@ -9,3 +9,7 @@ python-jose==3.3.0
 geopy==2.4.1
 pytest==7.4.3
 httpx==0.26.0
+pydantic[email]
+networkx>=2.8.0
+numpy>=1.20.0
+scipy>=1.8.0

@@ -108,37 +108,7 @@ async def get_events(
     
     return events
 
-@router.get("/recommendations/{user_id}", response_model=List[Event])
-async def get_event_recommendations(
-    user_id: str,
-    latitude: float,
-    longitude: float,
-    max_distance: Optional[float] = Query(10.0),
-    limit: int = Query(20, le=50)
-):
-    """
-    Get personalized event recommendations based on user interests and location
-    """
-    # Validate user exists
-    user = await firebase_service.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Validate coordinates
-    if not validate_coordinates(latitude, longitude):
-        raise HTTPException(status_code=400, detail="Invalid coordinates")
-    
-    # Get recommendations
-    recommendations = await recommendation_service.get_event_recommendations(
-        user_id, latitude, longitude, max_distance, limit
-    )
-    
-    # Ensure schedule is included in each recommended event
-    for event in recommendations:
-        if "schedule" not in event:
-            event["schedule"] = []
-    
-    return recommendations
+
 
 @router.get("/{event_id}", response_model=Event)
 async def get_event(event_id: str):
@@ -250,6 +220,45 @@ async def get_event_attendees(
             enriched_attendees.append(enriched_attendee)
     
     return enriched_attendees
+
+@router.get("/recommendations/{user_id}", response_model=List[Event])
+async def get_event_recommendations(
+    user_id: str,
+    latitude: float = Query(..., description="User's current latitude"),
+    longitude: float = Query(..., description="User's current longitude"),
+    distance: float = Query(10.0, description="Maximum distance in kilometers"),
+    limit: int = Query(10, le=50, description="Maximum number of recommendations to return")
+):
+    """
+    Get personalized event recommendations for a user
+    
+    This endpoint uses a recommendation engine that considers:
+    - User interests
+    - Social connections
+    - Geographic proximity
+    - Event timing
+    
+    Returns events with a score indicating relevance and score_details showing component scores.
+    """
+    # Validate user exists
+    user = await firebase_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Validate coordinates
+    if not validate_coordinates(latitude, longitude):
+        raise HTTPException(status_code=400, detail="Invalid coordinates")
+    
+    # Get recommendations from the recommendation service
+    recommended_events = await recommendation_service.get_event_recommendations(
+        user_id=user_id,
+        latitude=latitude,
+        longitude=longitude,
+        max_distance_km=distance,
+        limit=limit
+    )
+    
+    return recommended_events
 
 # Make sure to export router explicitly
 __all__ = ["router"]

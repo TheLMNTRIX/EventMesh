@@ -329,7 +329,11 @@
                     </div>
                     <div class="form-group">
                         <label for="rec-distance">Max Distance (km):</label>
-                        <input type="number" id="rec-distance" value="10" min="0">
+                        <input type="number" id="rec-distance" value="10" min="1" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="rec-limit">Limit:</label>
+                        <input type="number" id="rec-limit" value="10" min="1" max="50">
                     </div>
                     <button type="submit">Get Recommendations</button>
                 </form>
@@ -419,7 +423,7 @@
                     </div>
                     <div class="form-group">
                         <label for="conn-rec-limit">Limit:</label>
-                        <input type="number" id="conn-rec-limit" value="10" min="1" max="20">
+                        <input type="number" id="conn-rec-limit" value="10" min="1" max="50">
                     </div>
                     <button type="submit">Get Recommendations</button>
                 </form>
@@ -438,7 +442,7 @@
                     </div>
                     <div class="form-group">
                         <label for="event-conn-limit">Limit:</label>
-                        <input type="number" id="event-conn-limit" value="5" min="1" max="10">
+                        <input type="number" id="event-conn-limit" value="5" min="1" max="50">
                     </div>
                     <button type="submit">Get Event Connections</button>
                 </form>

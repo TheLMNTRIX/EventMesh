@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     MAX_EVENTS_PER_REQUEST: int = 100
     
     # Recommendation settings
-    MIN_MATCH_PERCENTAGE: int = 50
+    MIN_MATCH_PERCENTAGE: int = 25
     
     model_config = {
         "env_file": ".env",

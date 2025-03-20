@@ -5,6 +5,9 @@ from app.models.connection import ConnectionRequest, ConnectionResponse, Connect
 from app.services.firebase_service import firebase_service
 from app.services.recommendation_service import recommendation_service
 from app.utils.validators import validate_connection_status
+from app.models.connection import ConnectionRecommendation
+from app.services.recommendation_service import recommendation_service
+
 
 router = APIRouter()
 
@@ -177,77 +180,8 @@ async def get_user_connections(
     
     return enriched_connections
 
-@router.get("/recommendations/{user_id}")
-async def get_connection_recommendations(user_id: str, limit: int = Query(10, le=20)):
-    """Get recommended connections for a user based on mutual interests and events"""
-    # Validate user exists
-    user = await firebase_service.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Get recommendations
-    recommendations = await recommendation_service.get_connection_recommendations(user_id, limit)
-    
-    return recommendations
 
-@router.get("/event-buddies/{event_id}/{user_id}")
-async def get_event_connection_recommendations(event_id: str, user_id: str, limit: int = Query(5, le=10)):
-    """Get recommended connections for a specific event"""
-    # Validate user and event exist
-    user = await firebase_service.get_user(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    event = await firebase_service.get_event(event_id)
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-    
-    # Get all attendees for this event
-    attendees = await firebase_service.get_event_attendees(event_id, status="attending")
-    attendee_ids = [a["user_id"] for a in attendees if a["user_id"] != user_id]
-    
-    # Get user's interests
-    user_interests = user.get("interests", [])
-    
-    # Get user's existing connections to filter them out
-    connections = await firebase_service.get_user_connections(user_id, status="accepted")
-    connection_ids = []
-    for conn in connections:
-        other_id = conn["to_user_id"] if conn["from_user_id"] == user_id else conn["from_user_id"]
-        connection_ids.append(other_id)
-    
-    # Filter out existing connections
-    potential_buddies = [uid for uid in attendee_ids if uid not in connection_ids]
-    
-    # Build recommendations
-    recommendations = []
-    for buddy_id in potential_buddies:
-        buddy = await firebase_service.get_user(buddy_id)
-        if buddy:
-            buddy_interests = buddy.get("interests", [])
-            mutual_interests = list(set(user_interests) & set(buddy_interests))
-            
-            # Generate conversation starters
-            starters = []
-            if mutual_interests:
-                interest = mutual_interests[0]
-                starters.append(f"I see you're also interested in {interest}!")
-            starters.append(f"Looking forward to {event['title']}?")
-            starters.append("Is this your first time attending this type of event?")
-            
-            recommendation = {
-                "user_id": buddy_id,
-                "display_name": buddy.get("display_name", "Unknown"),
-                "profile_image_url": buddy.get("profile_image_url"),
-                "mutual_interests": mutual_interests,
-                "conversation_starters": starters
-            }
-            recommendations.append(recommendation)
-    
-    # Sort by number of mutual interests
-    recommendations.sort(key=lambda x: len(x["mutual_interests"]), reverse=True)
-    
-    return recommendations[:limit]
+
 
 @router.get("/pending-requests")
 async def get_pending_connection_requests(user_id: str = Query(..., description="ID of the user to check pending requests for")):
@@ -287,3 +221,70 @@ async def get_pending_connection_requests(user_id: str = Query(..., description=
             })
     
     return pending_senders
+
+@router.get("/recommendations/{user_id}", response_model=List[ConnectionRecommendation])
+async def get_connection_recommendations(
+    user_id: str,
+    limit: int = Query(10, le=50, description="Maximum number of recommendations to return")
+):
+    """
+    Get personalized connection recommendations for a user
+    
+    This endpoint suggests other users to connect with based on:
+    - Mutual interests
+    - Mutual connections
+    - Events in common
+    
+    Returns connections with a score indicating relevance.
+    """
+    # Validate user exists
+    user = await firebase_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get recommendations from the recommendation service
+    recommendations = await recommendation_service.get_connection_recommendations(
+        user_id=user_id,
+        limit=limit
+    )
+    
+    # The recommendations already include score from your recommendation service
+    return recommendations
+
+@router.get("/event/{event_id}/user/{user_id}", response_model=List[ConnectionRecommendation])
+async def get_event_based_connection_recommendations(
+    event_id: str,
+    user_id: str,
+    limit: int = Query(10, le=50, description="Maximum number of recommendations to return")
+):
+    """
+    Get connection recommendations for a user at a specific event
+    
+    This endpoint suggests other event attendees to connect with based on:
+    - Mutual interests, especially those related to the event
+    - Mutual connections
+    
+    Returns connections with a score indicating relevance.
+    """
+    # Validate user exists
+    user = await firebase_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Validate event exists
+    event = await firebase_service.get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Get recommendations from the recommendation service
+    recommendations = await recommendation_service.get_event_based_connection_recommendations(
+        event_id=event_id,
+        user_id=user_id,
+        limit=limit
+    )
+    
+    # The recommendations already include score from your recommendation service
+    return recommendations
+
+
+__all__ = ["router"]

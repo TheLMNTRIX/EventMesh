@@ -63,6 +63,8 @@ class Event(EventBase):
     updated_at: Optional[datetime] = None
     attendees_count: Optional[int] = 0
     attendees: Optional[List[EventAttendee]] = None
+    score: Optional[float] = None  # New field for recommendation score
+    score_details: Optional[Dict[str, float]] = None  # New field for recommendation score details
     
     class Config:
         from_attributes = True

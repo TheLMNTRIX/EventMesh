@@ -26,9 +26,11 @@ class ConnectionRecommendation(BaseModel):
     connection_id: Optional[str] = None
     display_name: Optional[str] = None
     profile_image_url: Optional[str] = None
+    bio: Optional[str] = None
     mutual_interests: Optional[List[str]] = None
+    mutual_connections: Optional[int] = None
     conversation_starters: Optional[List[str]] = None
     events_in_common: Optional[int] = None
-
+    score: Optional[float] = None
 
 __all__ = ["ConnectionStatus", "ConnectionRequest", "ConnectionResponse", "ConnectionSuggestion", "ConnectionRecommendation"]
