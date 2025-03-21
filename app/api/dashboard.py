@@ -305,6 +305,44 @@ async def get_event_feedback_with_user_details(
         "feedback": enriched_feedback
     }
 
+@router.get("/{event_id}/details")
+async def get_event_details_with_attendees(
+    event_id: str = Path(..., description="ID of the event to get details for")
+):
+    """
+    Get event details by ID with attendee names.
+    
+    Returns event information in the same structure as the events.py endpoint
+    but with an additional list of attendee names.
+    """
+    # Check if event exists
+    event = await firebase_service.get_event(event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+    
+    # Ensure schedule is included in the response
+    if "schedule" not in event:
+        event["schedule"] = []
+    
+    # Get attendees and their names
+    attendees = await firebase_service.get_event_attendees(event_id)
+    
+    # Extract attendee names
+    attendee_names = []
+    for attendee in attendees:
+        user_id = attendee["user_id"]
+        user_details = await firebase_service.get_user(user_id)
+        if user_details:
+            attendee_names.append(user_details.get("display_name", "Unknown"))
+    
+    # Create a copy of the event to avoid modifying the original
+    event_response = event.copy()
+    
+    # Add attendee names to the response
+    event_response["attendee_names"] = attendee_names
+    
+    return event_response
+
 __all__ = ["router"]
 
 
