@@ -310,10 +310,10 @@ async def get_event_details_with_attendees(
     event_id: str = Path(..., description="ID of the event to get details for")
 ):
     """
-    Get event details by ID with attendee names.
+    Get event details by ID with attendee information.
     
     Returns event information in the same structure as the events.py endpoint
-    but with an additional list of attendee names.
+    but with additional display_name field for each attendee.
     """
     # Check if event exists
     event = await firebase_service.get_event(event_id)
@@ -324,22 +324,31 @@ async def get_event_details_with_attendees(
     if "schedule" not in event:
         event["schedule"] = []
     
-    # Get attendees and their names
+    # Get attendees
     attendees = await firebase_service.get_event_attendees(event_id)
     
-    # Extract attendee names
-    attendee_names = []
+    # Enrich attendees with display names
+    enriched_attendees = []
     for attendee in attendees:
         user_id = attendee["user_id"]
         user_details = await firebase_service.get_user(user_id)
+        
+        # Create a copy of the original attendee data
+        enriched_attendee = attendee.copy()
+        
+        # Add the display name if user details were found
         if user_details:
-            attendee_names.append(user_details.get("display_name", "Unknown"))
+            enriched_attendee["display_name"] = user_details.get("display_name", "Unknown")
+        else:
+            enriched_attendee["display_name"] = "Unknown"
+            
+        enriched_attendees.append(enriched_attendee)
     
     # Create a copy of the event to avoid modifying the original
     event_response = event.copy()
     
-    # Add attendee names to the response
-    event_response["attendee_names"] = attendee_names
+    # Replace the attendees with our enriched version
+    event_response["attendees"] = enriched_attendees
     
     return event_response
 
