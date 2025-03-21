@@ -158,9 +158,10 @@ async def get_user_events(
         user_attendance = next((a for a in attendees if a["user_id"] == user_id), None)
         
         if user_attendance:
-            if status is None or user_attendance["status"] == status:
+            # We only support "attending" status now, so no need to check status
+            if status is None or status == "attending":
                 event_with_status = event.copy()
-                event_with_status["user_status"] = user_attendance["status"]
+                event_with_status["user_status"] = "attending"  # Hardcode to "attending" as that's the only status now
                 
                 # Ensure schedule is included
                 if "schedule" not in event_with_status:

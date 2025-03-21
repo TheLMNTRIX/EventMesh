@@ -266,12 +266,20 @@ async def get_event_recommendations(
     # Apply additional filtering based on optional parameters
     filtered_events = recommended_events
     
-    # Filter by categories if provided
+    # Sort by category match if categories are provided
     if categories:
-        filtered_events = [
-            event for event in filtered_events 
-            if set(categories).intersection(set(event.get('category', [])))
-        ]
+        # Sort events by whether they match the requested categories
+        # Events with matching categories come first, sorted by score
+        # Then events without matching categories, sorted by score
+        def category_match_sort_key(event):
+            event_categories = set(event.get('category', []))
+            requested_categories = set(categories)
+            has_match = len(event_categories.intersection(requested_categories)) > 0
+            # Return tuple: (has match (negative for sorting), score)
+            # Using negative for has_match to sort True before False
+            return (-int(has_match), -event.get('score', 0))
+            
+        filtered_events.sort(key=category_match_sort_key)
     
     # Filter by price if needed
     if free_only:
@@ -430,30 +438,8 @@ async def get_event_user_match_score(
             0.2 * time_score
         )
     
-    # Replace the current score inflation code with this gradient approach
-    if total_score <= 0.5:
-        # For scores below 50%, add a flat 0.25 (25%)
-        inflated_score = total_score + 0.25
-    else:
-        # For scores between 50% and 90%, use a linear gradient from 25% to 0%
-        # At 50% score, add 25% inflation
-        # At 90% score, add 0% inflation
-        # Calculate inflation percentage using linear interpolation
-        max_score = 0.9
-        min_score = 0.5
-        max_inflation = 0.25
-        min_inflation = 0.0
-        
-        # Calculate where the total_score falls in the 50%-90% range
-        score_position = (total_score - min_score) / (max_score - min_score)
-        # Calculate inflation based on position (inverse relationship: higher score = lower inflation)
-        inflation = max_inflation - score_position * (max_inflation - min_inflation)
-        
-        # Apply the calculated inflation
-        inflated_score = total_score + inflation
-        
-        # Safety cap at 90% (shouldn't be needed with this formula, but just to be safe)
-        inflated_score = min(0.9, inflated_score)
+    # Replace the current score inflation logic with:
+    inflated_score = recommendation_service._inflate_score(total_score)
     
     # Ensure schedule is included in the response (like get_event endpoint)
     if "schedule" not in event:

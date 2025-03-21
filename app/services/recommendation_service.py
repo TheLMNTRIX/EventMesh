@@ -107,6 +107,36 @@ class RecommendationService:
         
         # Return score based on percentage of connections attending
         return len(attending_connections) / len(user_connections) if user_connections else 0.0
+    
+    def _inflate_score(self, score: float) -> float:
+        """Apply consistent score inflation to recommendation scores
+        
+        Uses a gradient approach:
+        - For scores <= 0.5: add flat 0.25 inflation
+        - For scores between 0.5 and 0.9: use linear gradient (0.25 to 0)
+        - Cap at 0.9
+        """
+        if score <= 0.5:
+            # For scores below 50%, add a flat 0.25 (25%)
+            inflated_score = score + 0.25
+        else:
+            # For scores between 50% and 90%, use a linear gradient
+            max_score = 0.9
+            min_score = 0.5
+            max_inflation = 0.25
+            min_inflation = 0.0
+            
+            # Calculate where the score falls in the 50%-90% range
+            score_position = (score - min_score) / (max_score - min_score)
+            
+            # Calculate inflation based on position
+            inflation = max_inflation - score_position * (max_inflation - min_inflation)
+            
+            # Apply the calculated inflation
+            inflated_score = score + inflation
+            
+        # Safety cap at 90%
+        return min(0.9, inflated_score)
 
     def _calculate_location_score(self, user_location: Tuple[float, float], event_location: Dict[str, float], max_distance: float = 20.0) -> float:
         """Calculate location score based on proximity"""
@@ -294,7 +324,10 @@ class RecommendationService:
                         0.2 * location_score +
                         0.2 * time_score
                     )
-                    
+                
+                # Apply score inflation
+                inflated_score = self._inflate_score(total_score)
+                
                 # Check if event attendees exists and initialize it if not
                 if 'attendees' not in event:
                     event['attendees'] = []
@@ -324,7 +357,8 @@ class RecommendationService:
                     'attendees_count': event.get('attendees_count', 0),
                     'attendees': event.get('attendees', []),
                     'schedule': event.get('schedule', []),
-                    'score': total_score,
+                    'score': inflated_score,
+                    'original_score': total_score,
                     'score_details': {
                         'interest_score': interest_score,
                         'social_score': social_score,
@@ -391,6 +425,9 @@ class RecommendationService:
                 0.2 * common_events_score
             )
             
+            # Apply score inflation
+            inflated_score = self._inflate_score(total_score)
+            
             # Generate conversation starters
             conversation_starters = self._get_conversation_starters(user_interests, other_interests)
             
@@ -403,7 +440,8 @@ class RecommendationService:
                 'mutual_connections': len(mutual_connections),
                 'events_in_common': common_events,
                 'conversation_starters': conversation_starters,
-                'score': total_score
+                'score': inflated_score,
+                'original_score': total_score
             })
             
         # Sort by score and limit results
@@ -498,6 +536,9 @@ class RecommendationService:
             # Calculate total score
             total_score = 0.7 * interest_score + 0.3 * mutual_score
             
+            # Apply score inflation
+            inflated_score = self._inflate_score(total_score)
+            
             recommendations.append({
                 'connection_id': attendee_id,
                 'display_name': attendee.get('display_name', 'Unknown User'),
@@ -506,7 +547,8 @@ class RecommendationService:
                 'mutual_interests': list(common_interests),
                 'mutual_connections': len(mutual_connections),
                 'conversation_starters': conversation_starters,
-                'score': total_score
+                'score': inflated_score,
+                'original_score': total_score
             })
             
         # Sort by score and limit results
