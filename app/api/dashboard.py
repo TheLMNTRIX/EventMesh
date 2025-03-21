@@ -102,6 +102,7 @@ async def get_organizer_dashboard(
     - Total number of events organized
     - Total attendee count across all events
     - Overall average feedback score
+    - Average attendance rate per event
     - List of upcoming events sorted by date (nearest first)
     - List of past events sorted by date (most recent first)
     """
@@ -124,6 +125,9 @@ async def get_organizer_dashboard(
     total_attendees = 0
     for event in organizer_events:
         total_attendees += event.get("attendees_count", 0)
+    
+    # Calculate attendance rate (floor division of total attendees by total events)
+    attendance_rate = total_attendees // total_events if total_events > 0 else 0
     
     # Calculate overall feedback score
     total_rating = 0
@@ -196,7 +200,8 @@ async def get_organizer_dashboard(
         "stats": {
             "total_events": total_events,
             "total_attendees": total_attendees,
-            "average_rating": round(avg_overall_rating, 1)
+            "average_rating": round(avg_overall_rating, 1),
+            "attendance_rate": attendance_rate
         },
         "upcoming_events": upcoming_events,
         "past_events": past_events
